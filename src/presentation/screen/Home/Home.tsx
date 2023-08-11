@@ -1,42 +1,47 @@
 import { ChangeEvent, useState } from 'react'
 import { CheckBox } from '../../../common/component'
-// import { useFormatNumber } from '../../../common/util'
 import * as S from './styles'
 import { InputCurrency } from '../../../common/component/lib'
-
-// 'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS' | 'FUN'
-
-// let value = '0'
+import { simulatePostRequest } from '../../../common/util'
+import { Button } from '../../../common/component'
 
 function Home() {
-  // const [trunc, setTrunc] = useState(false)
-  const [value, setValue] = useState<string>()
+  const [value, setValue] = useState<number>(0)
+  const [valueResponse, setValueResponse] = useState<number>(0)
+  const [showResult, setShowResult] = useState<number>(0)
+  const [loading, setLoading] = useState(false)
 
   const [currency, setCurrency] = useState<
     'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS' | 'FUN'
   >('BRL')
 
-  // const { money } = useFormatNumber({
-  //   currency: currency
-  // })
-
-  const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    if (!value) return
-
-    setValue(value)
+  const onSubmit = async (value: number) => {
+    setLoading(true)
+    await simulatePostRequest(value)
+      .then((res) => {
+        setShowResult(res as number)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
-  console.log({ value })
+  const handleOnChange = (
+    _: ChangeEvent<HTMLInputElement>,
+    valueNumber: number
+  ) => {
+    setValueResponse(valueNumber)
+    setValue(valueNumber)
+  }
 
   return (
     <S.Container>
       <S.Content>
-        {/* <h4>Value no format: {value}</h4>
-        <h4>Value format: {value}</h4> */}
+        <h3>{loading ? 'loading' : showResult}</h3>
+        <h4>Typeof: {typeof valueResponse}</h4>
+        <h4>Value no format: {valueResponse}</h4>
 
         <InputCurrency
-          defaultValue={'1000'}
           onChange={handleOnChange}
           value={value}
           currency={currency}
@@ -85,13 +90,15 @@ function Home() {
             onClick={() => setCurrency('FUN')}
           />
         </S.CheckBoxs>
-        {/* <CheckBox
-          checked={trunc}
-          id='trunc'
-          label='Trunc'
-          name='trunc'
-          onClick={() => setTrunc((prev) => !prev)}
-        /> */}
+
+        <Button
+          variant
+          onClick={() => onSubmit(valueResponse)}
+          label={loading ? 'loading...' : 'Submit'}
+          id='submit'
+          name='submit'
+          type='button'
+        />
       </S.Content>
     </S.Container>
   )

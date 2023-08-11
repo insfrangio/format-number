@@ -59,7 +59,7 @@ const defaultConfig: CurrencyProps = {
 interface InputCurrencyProps {
   currency: string
   max?: number
-  value?: string
+  value: number
   defaultValue?: string
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -147,8 +147,6 @@ export const InputCurrency = (props: InputCurrencyProps) => {
 
     setMaskedValue(maskedValue)
   }, [currency, value, defaultValue])
-
-  console.log({ maskedValue: maskedValue })
 
   return (
     <Input
