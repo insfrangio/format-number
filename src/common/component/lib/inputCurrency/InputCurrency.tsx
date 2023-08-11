@@ -3,7 +3,7 @@ import { ChangeEvent, useEffect, useState } from 'react'
 import { formatCurrency } from './formatCurrency'
 import { CurrencyProps } from './types'
 import { Input } from '../../../component/Input/Input'
-import { trunc } from '../formatNumber/useFormatNumber'
+// import { trunc } from '../formatNumber/useFormatNumber'
 
 const defaultConfig: CurrencyProps = {
   PYG: {
