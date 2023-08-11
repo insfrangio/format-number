@@ -3,6 +3,7 @@ import styled from 'styled-components'
 export const Wrapper = styled.div`
   gap: 6px;
   display: flex;
+  width: 100%;
 `
 
 export const Prefix = styled.div`
@@ -19,6 +20,7 @@ export const Prefix = styled.div`
 `
 
 export const Container = styled.input`
+  width: 100%;
   border-radius: 8px;
   background: #8258e6;
 

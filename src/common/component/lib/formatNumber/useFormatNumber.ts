@@ -1,48 +1,17 @@
-export type FormatOptions = {
-  digits?: number
-}
+//tslint:disable
+// @ts-nocheck
 
-export type QuantityOptions = {
-  digits?: number
-  separator?: { thousand: string; decimal: string }
-  locale?: string
-  debug?: boolean
-  shortFormat?: boolean
-  shortFormatDigits?: number
-  trunc?: boolean
-}
-
-export type CurrencyOptions = {
-  digits?: number
-  maxDigits?: number
-  symbol?: string | string[]
-  locale?: string
-  currency?: string | 'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS'
-  debug?: boolean
-  shortFormat?: boolean
-  shortFormatDigits?: number
-  trunc?: boolean
-}
-
-export type TruncOptions = FormatOptions
-export type MoneyOptions = Omit<CurrencyOptions, 'locale' | 'debug'>
-export type MoneyFn = (
-  number: number | string,
-  options?: MoneyOptions
-) => string | number
-export type ConfigFn = (
-  options?: CurrencyOptions & QuantityOptions
-) => CurrencyOptions & QuantityOptions
-export type FormatFn = (
-  number: number,
-  options?: FormatOptions | undefined
-) => string | number
-export type ClampFn = (value: number, min: number, max: number) => number
-export type TruncFn = (value: number, options?: TruncOptions) => number
-export type QuantityFn = (
-  number: number,
-  options?: QuantityOptions | undefined
-) => string | number
+import {
+  ClampFn,
+  CurrencyOptions,
+  FormatFn,
+  MoneyFn,
+  ConfigFn,
+  QuantityFn,
+  QuantityOptions,
+  TruncFn,
+  TruncOptions
+} from './types'
 
 const valueOrDefault = (
   object: Record<string, unknown>,
@@ -90,18 +59,11 @@ function Commarize(
   }).format(_value)
 }
 
-export function trunc(
-  number: number,
-  digits: number,
-  currency: undefined | string | 'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS'
-) {
-  if (currency === 'BRL') return number
-
+export function trunc(number: number, digits: number) {
   const regexIsDecimal = /^[-+]?[0-9]+\.[0-9]+$/
-  const hasDecimal = String(number).match(regexIsDecimal)
+  var hasDecimal = String(number).match(regexIsDecimal)
+
   if (hasDecimal) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: Object is possibly 'null'.
     const decimalPart = number
       .toString()
       .split('.')
@@ -114,10 +76,7 @@ export function trunc(
   return Math.trunc(Number(number))
 }
 
-function loadCurrencyOptions(
-  settings: (CurrencyOptions & QuantityOptions) | undefined,
-  options: MoneyOptions | undefined
-): CurrencyOptions {
+function loadCurrencyOptions(settings, options): CurrencyOptions {
   let op: CurrencyOptions = {
     ...settings,
     ...options,
@@ -222,9 +181,8 @@ function loadCurrencyOptions(
         break
       }
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (e: any) {
-    if (op.debug && e?.message) {
+  } catch (e) {
+    if (op.debug) {
       console.warn(`formatting number: cause an exception "${e.message}"`)
     }
   }
@@ -232,9 +190,7 @@ function loadCurrencyOptions(
   return op
 }
 
-export const useFormatNumber = (
-  settings?: CurrencyOptions & QuantityOptions
-) => {
+export function useFormatNumber(settings?: CurrencyOptions & QuantityOptions) {
   const obj: {
     money: MoneyFn
     config: ConfigFn
@@ -242,48 +198,9 @@ export const useFormatNumber = (
     clamp: ClampFn
     quantity: QuantityFn
     trunc: TruncFn
-    currenciesWithDecimals: string[]
-    value: MoneyFn
   } = {
-    value: (number, options) => {
-      const op = loadCurrencyOptions(settings, options)
-
-      if (!op.currency) return number
-
-      try {
-        if (isNaN(number as number)) {
-          return `${number}`
-        }
-
-        if (op.shortFormat && Math.abs(number as number) > 99999.99) {
-          const value = Commarize(number, op)
-          return `${value}`
-        }
-
-        if (op.trunc) {
-          number = trunc(number as number, op.digits || 0, op.currency)
-        }
-
-        const [minimumFractionDigits, maximumFractionDigits] = assertDigits(op)
-
-        const formatValue = new Intl.NumberFormat(op.locale, {
-          currency: op.currency,
-          minimumFractionDigits,
-          maximumFractionDigits
-        }).format(number as number)
-        return `${formatValue}`
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (op.debug) {
-          console.warn(
-            `formatting number: ${number} cause an exception "${e.message}"`
-          )
-        }
-        return number
-      }
-    },
     money: (number, options) => {
-      const op = loadCurrencyOptions(settings, options)
+      let op = loadCurrencyOptions(settings, options)
 
       if (!op.currency) return number
 
@@ -304,9 +221,7 @@ export const useFormatNumber = (
           return `${prefix}${value}${suffix}`
         }
 
-        if (op.trunc) {
-          number = trunc(number as number, op.digits || 0, op.currency)
-        }
+        if (op.trunc) number = trunc(number as number, op.digits)
 
         const [minimumFractionDigits, maximumFractionDigits] = assertDigits(op)
 
@@ -316,7 +231,6 @@ export const useFormatNumber = (
           maximumFractionDigits
         }).format(number as number)
         return `${prefix}${formatValue}${suffix}`
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         if (op.debug) {
           console.warn(
@@ -368,11 +282,9 @@ export const useFormatNumber = (
             minimumFractionDigits,
             maximumFractionDigits
           })
-        } else if (op.trunc)
-          number = trunc(number as number, op.digits || 0, settings?.currency)
+        } else if (op.trunc) number = trunc(number as number, op.digits)
 
         return _number
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         if (op.debug) {
           console.warn(
@@ -383,18 +295,16 @@ export const useFormatNumber = (
       }
     },
     trunc: (number, options) => {
-      const op: TruncOptions = {
+      let op: TruncOptions = {
         ...settings,
         ...options
       }
 
-      return trunc(number, op?.digits || 0, settings?.currency)
+      return trunc(number, op?.digits || 0)
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    format: () => {
+    format: (number, options) => {
       return ''
-    },
-    currenciesWithDecimals: ['BRL', 'USD', 'ARS', 'FUN']
+    }
   }
   return obj
 }

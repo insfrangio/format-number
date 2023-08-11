@@ -1,58 +1,45 @@
 import { ChangeEvent, useState } from 'react'
-import { Input, CheckBox } from '../../../common/component'
-import { useFormatNumber } from '../../../common/util'
+import { CheckBox } from '../../../common/component'
+// import { useFormatNumber } from '../../../common/util'
 import * as S from './styles'
+import { InputCurrency } from '../../../common/component/lib'
 
-// 'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS'
+// 'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS' | 'FUN'
+
+// let value = '0'
 
 function Home() {
-  const [value] = useState<string | number>(0)
-  const [trunc, setTrunc] = useState(false)
+  // const [trunc, setTrunc] = useState(false)
+  const [value, setValue] = useState<string>()
 
   const [currency, setCurrency] = useState<
-    'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS'
+    'BRL' | 'USD' | 'PYG' | 'TZS' | 'ARS' | 'FUN'
   >('BRL')
-  const {
-    value: valueFormat,
-    money,
-    config
-  } = useFormatNumber({
-    currency: currency
-  })
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log({
-      e: e.target.value,
-      ed: valueFormat(e.target.value)
-    })
-    let currentValue: string | number = e.target.value
-    if (currency === 'PYG') {
-      if (/[^\d,]/.test(currentValue)) {
-        console.log('es string')
-        currentValue = '0'
-      }
-      currentValue = currentValue.split(',').join('')
-      currentValue = Number(currentValue)
-      currentValue = valueFormat(currentValue)
-    }
+  // const { money } = useFormatNumber({
+  //   currency: currency
+  // })
 
-    if (currency === 'BRL') {
-    }
+  const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (!value) return
 
-    return
+    setValue(value)
   }
+
+  console.log({ value })
+
   return (
     <S.Container>
       <S.Content>
-        <h4>Value example format BRL: {money(12.4, { currency: 'BRL' })}</h4>
-        <h4>Value no format: {value}</h4>
-        <h4>Value format: {money(value)}</h4>
-        <Input
-          prefix={config({ currency: currency }).symbol}
-          onChange={handleChange}
-          placeholder='Number'
-          type='tel'
-          key='number'
+        {/* <h4>Value no format: {value}</h4>
+        <h4>Value format: {value}</h4> */}
+
+        <InputCurrency
+          defaultValue={'1000'}
+          onChange={handleOnChange}
+          value={value}
+          currency={currency}
         />
         <S.CheckBoxs>
           <CheckBox
@@ -90,14 +77,21 @@ function Home() {
             name='USD'
             onClick={() => setCurrency('USD')}
           />
+          <CheckBox
+            checked={currency === 'FUN'}
+            id='FUN'
+            label='FUN'
+            name='FUN'
+            onClick={() => setCurrency('FUN')}
+          />
         </S.CheckBoxs>
-        <CheckBox
+        {/* <CheckBox
           checked={trunc}
           id='trunc'
           label='Trunc'
           name='trunc'
           onClick={() => setTrunc((prev) => !prev)}
-        />
+        /> */}
       </S.Content>
     </S.Container>
   )
