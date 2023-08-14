@@ -41,11 +41,7 @@ function Home() {
         <h4>Typeof: {typeof valueResponse}</h4>
         <h4>Value no format: {valueResponse}</h4>
 
-        <InputCurrency
-          onChange={handleOnChange}
-          value={value}
-          currency={currency}
-        />
+        <InputCurrency onChange={handleOnChange} currency={currency} />
         <S.CheckBoxs>
           <CheckBox
             checked={currency === 'BRL'}

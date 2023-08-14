@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent } from 'react'
 
 import { formatCurrency } from './formatCurrency'
 import { CurrencyProps } from './types'
@@ -58,8 +58,6 @@ const defaultConfig: CurrencyProps = {
 
 interface InputCurrencyProps {
   currency: string
-  max?: number
-  value: number
   defaultValue?: string
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -68,90 +66,71 @@ interface InputCurrencyProps {
   ) => void
 }
 
+let currentMaskedValue = '0'
+let firstRender = false
+
 export const InputCurrency = (props: InputCurrencyProps) => {
-  const { value, currency = 'BRL', max, onChange, defaultValue } = props
+  const { currency = 'BRL', onChange, defaultValue } = props
 
-  const [maskedValue, setMaskedValue] = useState(defaultValue || '0')
-
-  // to prevent a malformed config object
+  // const [maskedValue, setMaskedValue] = useState(defaultValue || '0')
   const safeConfig = defaultConfig[currency]
 
-  const clean = (number: string | number) => {
-    if (typeof number === 'number') {
-      return number
-    }
-
-    // strips everything that is not a number (positive or negative)
+  // Retorna el valor numerico sin Mascara
+  const clean = (number: string) => {
     return Number(number.toString().replace(/[^0-9-]/g, ''))
   }
 
-  const normalizeValue = (value: string | number): number => {
+  // Retorna el valor numerico con o sin "," decimal, normalizado dependiendo de la config de la currency
+  const normalizeValue = (value: string): number => {
     const { maximumFractionDigits } = safeConfig
     let safeNumber
 
-    if (typeof value === 'string') {
-      safeNumber = clean(value)
+    safeNumber = clean(value)
 
-      if (safeNumber % 1 !== 0) {
-        safeNumber = safeNumber.toFixed(maximumFractionDigits)
-      }
-    } else {
-      safeNumber = Number.isInteger(value)
-        ? Number(value) * 10 ** maximumFractionDigits
-        : Number(value).toFixed(maximumFractionDigits)
-    }
-
-    return clean(safeNumber) / 10 ** maximumFractionDigits
+    return safeNumber / 10 ** maximumFractionDigits
   }
 
-  const calculateValues = (
-    inputFieldValue: string | number
-  ): [number, string] => {
+  // Retorna un array de 2 posiciones, la primera es el valor numerico, la segunda es el valor con mascara
+  const calculateValues = (inputFieldValue: string): [number, string] => {
     const value = normalizeValue(inputFieldValue)
-    const maskedValue = formatCurrency(value, safeConfig)
 
-    return [value, maskedValue]
+    const valueFormatWithMask = formatCurrency(value, safeConfig)
+
+    return [value, valueFormatWithMask]
   }
 
+  // Actualiza los valores del state
   const updateValues = (value: string): [number, string] => {
     const [calculatedValue, calculatedMaskedValue] = calculateValues(value)
 
-    if (!max || calculatedValue <= max) {
-      setMaskedValue(calculatedMaskedValue)
+    currentMaskedValue = calculatedMaskedValue
 
-      return [calculatedValue, calculatedMaskedValue]
-    } else {
-      return [normalizeValue(maskedValue), maskedValue]
-    }
+    return [calculatedValue, calculatedMaskedValue]
   }
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    firstRender = true
     event.preventDefault()
 
     const currentValue: string = event.target.value
+    const [value, valueWithMasked] = updateValues(currentValue)
 
-    const [value, maskedValue] = updateValues(currentValue)
-
-    if (maskedValue) {
-      onChange(event, value, maskedValue)
+    if (valueWithMasked) {
+      onChange(event, value, valueWithMasked)
     }
   }
 
-  useEffect(() => {
-    // const currentValue = trunc(
-    //   Number(value! || defaultValue || 0),
-    //   safeConfig.maximumFractionDigits
-    // )
-    const currentValue = value || defaultValue || 0
-    const [, maskedValue] = calculateValues(currentValue)
-
-    setMaskedValue(maskedValue)
-  }, [currency, value, defaultValue])
+  if (!firstRender) {
+    currentMaskedValue = formatCurrency(
+      normalizeValue(defaultValue || '0'),
+      safeConfig
+    )
+  }
 
   return (
     <Input
       defaultValue={defaultValue}
-      value={maskedValue}
+      value={currentMaskedValue}
       onChange={handleChange}
       type='tel'
     />
